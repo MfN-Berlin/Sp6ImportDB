@@ -2,9 +2,8 @@
 /* Import database for Specify 6                                              */
 /******************************************************************************/
 
--- Replace in your text editor all svar_destdb_ entries 
--- with the Specify destination database name:
--- e.g. svar_destdb_ -> `specify`.
+-- Replace all svar_destdb_ entries with the Specify destination database name 
+-- in your text editor: e.g. svar_destdb_ -> `specify`.
 
 -- After the import you must rebuild all trees in Specify
 -- [System] > [Trees] > [Update Xxx Tree].
