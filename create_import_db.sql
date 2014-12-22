@@ -1549,6 +1549,7 @@ BEGIN
   SET NEW.`Subgenus`    = COALESCE(TRIM(NEW.`Subgenus`), '');
   SET NEW.`Species`     = COALESCE(TRIM(NEW.`Species`), '');
   SET NEW.`Subspecies`  = COALESCE(TRIM(NEW.`Subspecies`), '');
+  SET NEW.`Variation`   = COALESCE(TRIM(NEW.`Variation`), '');
 
   SET NEW.`KingdomAuthor`     = COALESCE(TRIM(NEW.`KingdomAuthor`), '');
   SET NEW.`DivisionAuthor`    = COALESCE(TRIM(NEW.`DivisionAuthor`), '');
@@ -1571,6 +1572,7 @@ BEGIN
   SET NEW.`SubgenusAuthor`    = COALESCE(TRIM(NEW.`SubgenusAuthor`), '');
   SET NEW.`SpeciesAuthor`     = COALESCE(TRIM(NEW.`SpeciesAuthor`), '');
   SET NEW.`SubspeciesAuthor`  = COALESCE(TRIM(NEW.`SubspeciesAuthor`), '');
+  SET NEW.`VariationAuthor`   = COALESCE(TRIM(NEW.`VariationAuthor`), '');
 END
 
 GO
