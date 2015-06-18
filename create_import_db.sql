@@ -7229,8 +7229,7 @@ BEGIN
 
   UPDATE `t_imp_collectionobject` T1
          INNER JOIN svar_destdb_.`accession` T2 
-                 ON (T1.`_DivisionID`     = T2.`DivisionID`)
-                AND (T1.`AccessionNumber` = T2.`AccessionNumber`)
+                 ON T1.`AccessionNumber` = T2.`AccessionNumber`
      SET T1.`_AccessionID` = T2.`AccessionID`
    WHERE (T1.`_imported` = 0)
      AND (COALESCE(TRIM(T1.`AccessionNumber`), '') <> '');
