@@ -8,6 +8,8 @@
 -- After the import you must rebuild all trees in Specify
 -- [System] > [Trees] > [Update Xxx Tree].
 
+-- last changes: 2015-06-18
+
 DELIMITER GO
 
 -- create specify import database
@@ -4053,7 +4055,19 @@ BEGIN
          T1.`_importguid`        = UUID()
    WHERE (`_imported` = 0);
 
-  INSERT INTO `tmp_steps` VALUES ('accession',2,NOW());
+  INSERT INTO `tmp_steps` VALUES ('accession', 2.1, NOW());
+
+
+  UPDATE `t_imp_accession` T1 
+         INNER JOIN svar_destdb_.`accession` T2
+                 ON T1.`_DivisionID`     = T2.`DivisionID`
+                AND T1.`AccessionNumber` = T2.`AccessionNumber`
+     SET T1.`_error`    = 1,
+         T1.`_errormsg` = 'AccessionNumber already exists.'
+   WHERE (T1.`_imported` = 0)
+     AND (T1.`_error`    = 0);
+
+  INSERT INTO `tmp_steps` VALUES ('accession', 2.2, NOW());
 
 
   -- Agents: Created by, Modified by
@@ -7214,14 +7228,23 @@ BEGIN
   -- `AccessionID`
 
   UPDATE `t_imp_collectionobject` T1
-         INNER JOIN `t_imp_accession` T2 ON (T1.`_CollectionID`   = T2.`_CollectionID`)
-                                        AND (T1.`AccessionNumber` = T2.`AccessionNumber`)
-     SET T1.`_AccessionID` = T2.`_AccessionID`
+         INNER JOIN svar_destdb_.`accession` T2 
+                 ON (T1.`_DivisionID`     = T2.`DivisionID`)
+                AND (T1.`AccessionNumber` = T2.`AccessionNumber`)
+     SET T1.`_AccessionID` = T2.`AccessionID`
    WHERE (T1.`_imported` = 0)
      AND (COALESCE(TRIM(T1.`AccessionNumber`), '') <> '');
 
-  INSERT INTO `tmp_steps` VALUES ('collectionobject',9.1,NOW());
+  INSERT INTO `tmp_steps` VALUES ('collectionobject', 9.1,NOW());
 
+  UPDATE `t_imp_collectionobject` T1
+     SET `_error`    = 1,
+         `_errormsg` = 'Accession number not found.'
+   WHERE (T1.`_imported` = 0)
+     AND (COALESCE(TRIM(T1.`AccessionNumber`), '') <> '')
+     AND T1.`_AccessionID` IS NULL;
+
+  INSERT INTO `tmp_steps` VALUES ('collectionobject', 9.2,NOW());
 
   -- `ContainerOwnerID`
 
@@ -7232,7 +7255,7 @@ BEGIN
    WHERE (T1.`_imported` = 0)
      AND (COALESCE(TRIM(T1.`OwnerOfContainer`), '') <> '');
 
-  INSERT INTO `tmp_steps` VALUES ('collectionobject',9.2,NOW());
+  INSERT INTO `tmp_steps` VALUES ('collectionobject',9.3,NOW());
 
 
   -- `ContainerID`
@@ -7244,7 +7267,7 @@ BEGIN
    WHERE (T1.`_imported` = 0)
      AND (COALESCE(TRIM(T1.`ChildOfContainer`), '') <> '');
 
-  INSERT INTO `tmp_steps` VALUES ('collectionobject',9.3,NOW());
+  INSERT INTO `tmp_steps` VALUES ('collectionobject',9.4,NOW());
 
 
   -- Specify Import
