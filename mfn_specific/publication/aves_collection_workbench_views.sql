@@ -219,12 +219,7 @@ AS
            END AS [Availability],
            CONVERT(NVARCHAR(MAX), remarks) AS remarks, 
            CONVERT(NVARCHAR(MAX), publicremarks) AS collectionObjectText3, 
-           CASE C.visibilityid
-             WHEN 0 THEN N'full'
-             WHEN 2 THEN N'without collecting event'
-             WHEN 3 THEN N'without collector(s)'
-             ELSE N'not any'
-           END AS Visibility,
+           C.visibilityid AS Visibility,
            CONVERT(INT, 1) AS collectionObjectYesNo1,
            CONVERT(INT, 0) AS collectionObjectYesNo2,
 
@@ -270,9 +265,14 @@ AS
              ELSE NULL
            END AS LatLongType, 
 
-           CONVERT(NVARCHAR(10), dbo.f_extractDateFromDMYString(C.COLLDATE)) AS StartDate,
+           CONVERT(NVARCHAR(10), CASE 
+                                   WHEN ISDATE(dbo.f_extractDateFromDMYString(C.COLLDATE)) = 1
+                                   THEN dbo.f_extractDateFromDMYString(C.COLLDATE)
+                                   ELSE NULL
+                                 END) AS StartDate,
            CONVERT(NVARCHAR(50), CASE 
                                    WHEN dbo.f_extractDateFromDMYString(C.COLLDATE) IS NULL
+                                     OR ISDATE(dbo.f_extractDateFromDMYString(C.COLLDATE)) <> 1
                                    THEN C.COLLDATE
                                    ELSE N'' 
                                  END) AS collectingEventVerbatimDate,
@@ -682,7 +682,7 @@ CREATE VIEW dbo.v_specify_publication
 AS
   SELECT *
     FROM dbo.v_specify
-   WHERE Visibility <> N'not any'
+   WHERE Visibility = 0
 
 GO
 
