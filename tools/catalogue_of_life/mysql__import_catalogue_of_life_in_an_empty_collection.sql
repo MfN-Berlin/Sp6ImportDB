@@ -19,12 +19,12 @@ GO
 
 CREATE TABLE IF NOT EXISTS `t_coltaxonimport`
 (
-  `id`                  INT          NOT NULL,
+  `id`                  VARCHAR(64)  NOT NULL,
   `name`                VARCHAR(64)  NOT NULL,
   `rank`                VARCHAR(32)  NOT NULL,
   `name_status`         VARCHAR(64)  NOT NULL,
-  `parentid`            INT          NOT NULL,
-  `validid`             INT          NOT NULL DEFAULT 0,
+  `parentid`            VARCHAR(64)  NOT NULL DEFAULT '',
+  `validid`             VARCHAR(64)  NOT NULL DEFAULT '',
   `genus`               VARCHAR(64)  NULL DEFAULT '',
   `species`             VARCHAR(64)  NULL DEFAULT '',
   `infraspecies_marker` VARCHAR(64)  NULL DEFAULT '',
@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS `t_coltaxonimport`
 
   CONSTRAINT `pk_coltaxonimport_01` PRIMARY KEY (`id`),
   INDEX      `ix_coltaxonimport_01` (`parentid`, `name`),
-  INDEX      `ix_coltaxonimport_02` (`genus`, `species`, `infraspecies`)
+  INDEX      `ix_coltaxonimport_02` (`genus`, `species`, `infraspecies`),
+  INDEX      `ix_coltaxonimport_03` (`validid`)
 
 ) DEFAULT CHARSET=utf8;
 
@@ -52,14 +53,14 @@ BEGIN
   DECLARE $treedefid     INT;
   DECLARE $treedefitemid INT;
 
-  -- New index for Specify field "taxon.Number1" that contains the cataloque of life id.
+  -- New index for Specify field "taxon.Text5" that contains the cataloque of life id.
 
   IF (NOT EXISTS(SELECT *
                    FROM INFORMATION_SCHEMA.STATISTICS
                   WHERE (table_schema = 'svar_destdb_')
                     AND (table_name   = 'taxon')
                     AND (index_name   = 'ix_mfn_catalogueoflifeid'))) THEN
-    CREATE INDEX ix_mfn_catalogueoflifeid ON `svar_destdb_`.`taxon` (`Number1`, `TaxonID`);
+    CREATE INDEX ix_mfn_catalogueoflifeid ON `svar_destdb_`.`taxon` (`Text5`(64), `TaxonID`);
   END IF;
 
   SET $treedefid     = `f_getTaxonTreeDefID`($collname);
@@ -70,7 +71,7 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
@@ -78,7 +79,7 @@ BEGIN
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport`
           WHERE (`rank`    = 'Kingdom')
-            AND (`validid` = 0);
+            AND (`validid` = '');
 
   -- Phyla
 
@@ -86,16 +87,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 30, T2.`TaxonID`, T1.`name`, T1.`name`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Phylum')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
   -- Class
@@ -104,16 +105,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 60, T2.`TaxonID`, T1.`name`, T1.`name`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Class')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
   -- Order
@@ -122,16 +123,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 100, T2.`TaxonID`, T1.`name`, T1.`name`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Order')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
   -- Superfamily
@@ -141,16 +142,16 @@ BEGIN
   IF ($treedefitemid IS NOT NULL) THEN
     INSERT
       INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                                 , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                                 , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                  , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                  , `TimestampCreated`, `TimestampModified`
                                  , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
            SELECT 130, T2.`TaxonID`, T1.`name`, T1.`name`, T1.`author`, T1.`name_status`, T1.`id`, 1
                 , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
              FROM `t_coltaxonimport` T1
-                  INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                  INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
             WHERE (T1.`rank`           = 'Superfamily')
-              AND (T1.`validid`        = 0)
+              AND (T1.`validid`        = '')
               AND (T2.`TaxonTreeDefID` = $treedefid);
   END IF;
 
@@ -160,16 +161,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 140, T2.`TaxonID`, T1.`name`, T1.`name`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Family')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
   -- Genus
@@ -178,16 +179,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 180, T2.`TaxonID`, T1.`name`, T1.`name`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Genus')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
   -- valid species
@@ -196,16 +197,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 220, T2.`TaxonID`, T1.`name`, T1.`species`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Species')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
   -- valid subspecies
@@ -214,16 +215,16 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 230, T2.`TaxonID`, T1.`name`, T1.`infraspecies`, T1.`author`, T1.`name_status`, T1.`id`, 1
               , $treedefid, $treedefitemid, 1, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`parentid` = T2.`Text5`)
           WHERE (T1.`rank`           = 'Infraspecies')
-            AND (T1.`validid`        = 0)
+            AND (T1.`validid`        = '')
             AND (COALESCE(T1.`infraspecies_marker`, '') IN ('', 'subspecies'))
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
@@ -233,7 +234,7 @@ BEGIN
 
   CREATE TEMPORARY TABLE `synonyms`
   (
-    `itisid`     INT,
+    `id`         VARCHAR(64),
     `familyid`   INT,
     `rankid`     INT,
     `genus`      VARCHAR(64),
@@ -243,7 +244,7 @@ BEGIN
     `subspecies` VARCHAR(64),
     `parentid`   INT,
 
-    PRIMARY KEY (`itisid`),
+    PRIMARY KEY (`id`),
     INDEX (`familyid`),
     INDEX (`rankid`),
     INDEX (`parentid`),
@@ -259,10 +260,10 @@ BEGIN
 	INTO `synonyms`
          SELECT T1.`id`, T3.`ParentID`, 220, T1.`Genus`, NULL, T1.`Species`, NULL, '', NULL
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Text5`)
                 INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`ParentID` = T3.`TaxonID`)
           WHERE (T1.`rank`           = 'species')
-            AND (T1.`validid`        > 0)
+            AND (T1.`validid`        <> '')
             AND (T2.`RankID`         = 220)
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
@@ -272,11 +273,11 @@ BEGIN
 	INTO `synonyms`
          SELECT T1.`id`, T4.`ParentID`, 220, T1.`Genus`, NULL, T1.`Species`, NULL, '', NULL
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Text5`)
                 INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`ParentID` = T3.`TaxonID`)
                 INNER JOIN `svar_destdb_`.`taxon` T4 ON (T3.`ParentID` = T4.`TaxonID`)
           WHERE (T1.`rank`           = 'species')
-            AND (T1.`validid`        > 0)
+            AND (T1.`validid`        <> '')
             AND (T2.`RankID`         = 230)
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
@@ -286,10 +287,10 @@ BEGIN
 	INTO `synonyms`
          SELECT T1.`id`, T3.`ParentID`, 230, T1.`Genus`, NULL, T1.`Species`, NULL, T1.`Infraspecies`, NULL
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Text5`)
                 INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`ParentID` = T3.`TaxonID`)
           WHERE (T1.`rank`           = 'Infraspecies') AND (COALESCE(T1.`infraspecies_marker`) IN ('', 'subspecies'))
-            AND (T1.`validid`        > 0)
+            AND (T1.`validid`        <> '')
             AND (T2.`RankID`         = 220)
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
@@ -299,11 +300,11 @@ BEGIN
 	INTO `synonyms`
          SELECT T1.`id`, T4.`ParentID`, 230, T1.`Genus`, NULL, T1.`Species`, NULL, T1.`Infraspecies`, NULL
            FROM `t_coltaxonimport` T1
-                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Number1`)
+                INNER JOIN `svar_destdb_`.`taxon` T2 ON (T1.`validid`  = T2.`Text5`)
                 INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`ParentID` = T3.`TaxonID`)
                 INNER JOIN `svar_destdb_`.`taxon` T4 ON (T3.`ParentID` = T4.`TaxonID`)
           WHERE (T1.`rank`           = 'Infraspecies') AND (COALESCE(T1.`infraspecies_marker`) IN ('', 'subspecies'))
-            AND (T1.`validid`        > 0)
+            AND (T1.`validid`        <> '')
             AND (T2.`RankID`         = 230)
             AND (T2.`TaxonTreeDefID` = $treedefid);
 
@@ -322,7 +323,7 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
@@ -357,7 +358,7 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
@@ -387,15 +388,15 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `AcceptedID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 220, T1.`parentid`, T3.`TaxonID`, T2.`name`, T1.`species`, T2.`author`, T2.`name_status`, T2.`id`, 1
               , $treedefid, $treedefitemid, 0, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `synonyms` T1
-                INNER JOIN `t_coltaxonimport` T2 ON (T1.`itisid` = T2.`id`)
-                INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`validid` = T3.`Number1`)
+                INNER JOIN `t_coltaxonimport` T2 ON (T1.`id` = T2.`id`)
+                INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`validid` = T3.`Text5`)
           WHERE (T1.`rankid`         = 220)
             AND (T3.`TaxonTreeDefID` = $treedefid);
 
@@ -405,20 +406,33 @@ BEGIN
 
   INSERT
     INTO `svar_destdb_`.`taxon` (`RankID`, `ParentID`, `AcceptedID`, `FullName`, `Name`, `Author`
-                               , `COLStatus`, `Number1`, `Version`, `TaxonTreeDefID`
+                               , `COLStatus`, `Text5`, `Version`, `TaxonTreeDefID`
                                , `TaxonTreeDefItemID`, `IsAccepted`, `IsHybrid`
                                , `TimestampCreated`, `TimestampModified`
                                , `CreatedByAgentID`, `ModifiedByAgentID`, `Source`)
          SELECT 230, T1.`parentid`, T3.`TaxonID`, T2.`name`, T1.`subspecies`, T2.`author`, T2.`name_status`, T2.`id`, 1
               , $treedefid, $treedefitemid, 0, 0, NOW(), NOW(), 1, 1, 'Catalogue of Life'
            FROM `synonyms` T1
-                INNER JOIN `t_coltaxonimport` T2 ON (T1.`itisid` = T2.`id`)
-                INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`validid` = T3.`Number1`)
+                INNER JOIN `t_coltaxonimport` T2 ON (T1.`id` = T2.`id`)
+                INNER JOIN `svar_destdb_`.`taxon` T3 ON (T2.`validid` = T3.`Text5`)
           WHERE (T1.`rankid`         = 230)
             AND (T3.`TaxonTreeDefID` = $treedefid);
 
      
   DROP TEMPORARY TABLE IF EXISTS `synonyms`;
+
+  UPDATE `specify_test`.`taxon`
+     SET `Text5` = NULL
+   WHERE `TaxonTreeDefID` = $treedefid
+     AND `Text5` IS NOT NULL;
+
+  IF (EXISTS(SELECT *
+               FROM INFORMATION_SCHEMA.STATISTICS
+              WHERE (table_schema = 'svar_destdb_')
+                AND (table_name   = 'taxon')
+                AND (index_name   = 'ix_mfn_catalogueoflifeid'))) THEN
+    DROP INDEX ix_mfn_catalogueoflifeid ON `svar_destdb_`.`taxon`;
+  END IF;
 END
 
 GO
