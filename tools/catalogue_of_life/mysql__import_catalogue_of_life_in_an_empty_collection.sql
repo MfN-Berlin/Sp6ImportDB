@@ -421,7 +421,7 @@ BEGIN
      
   DROP TEMPORARY TABLE IF EXISTS `synonyms`;
 
-  UPDATE `specify_test`.`taxon`
+  UPDATE `svar_destdb_`.`taxon`
      SET `Text5` = NULL
    WHERE `TaxonTreeDefID` = $treedefid
      AND `Text5` IS NOT NULL;
