@@ -219,7 +219,13 @@ AS
            END AS [Availability],
            CONVERT(NVARCHAR(MAX), remarks) AS remarks, 
            CONVERT(NVARCHAR(MAX), publicremarks) AS collectionObjectText3, 
-           C.visibilityid AS Visibility,
+           CASE C.visibilityid
+             WHEN 0 THEN N'full'
+             WHEN 2 THEN N'without collecting event'
+             WHEN 3 THEN N'without collector(s)'
+             WHEN 4 THEN N'without collector and accession'
+             ELSE N'not any'
+           END AS Integer1,
            CONVERT(INT, 1) AS collectionObjectYesNo1,
            CONVERT(INT, 0) AS collectionObjectYesNo2,
 
@@ -682,7 +688,7 @@ CREATE VIEW dbo.v_specify_publication
 AS
   SELECT *
     FROM dbo.v_specify
-   WHERE Visibility = 0
+   WHERE Integer1 = 'full'
 
 GO
 
